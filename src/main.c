@@ -32,11 +32,10 @@ int main() {
     Chunk *chunk_vec = malloc(ALLOC_PCK * sizeof(Chunk));
     size_t vec_size = 0, vec_capacity = ALLOC_PCK;
     while (1) {
-        chunk_vec[vec_size] = init_chunk(&file);
+        chunk_vec[vec_size] = init_crit_chunk(&file);
 
         if (IS_END(chunk_vec[vec_size].type)) {
-            ++vec_size;
-            break;
+            break; // IEND chunk not included, as it only marks the end of the file
         }
 
         if (++vec_size == vec_capacity) {
@@ -52,7 +51,13 @@ int main() {
         }
     }
 
-    process_chunks(chunk_vec, vec_size);
+    for (int i = 0; i < vec_size; ++i) {
+        print_chunk(&chunk_vec[i]);
+    }
+
+    if (process_chunks(chunk_vec, vec_size) == -1) {
+        return -1;
+    }
 
     fclose(file);
     free_chunks(chunk_vec, vec_size);
