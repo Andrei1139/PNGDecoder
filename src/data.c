@@ -1,4 +1,4 @@
-#include "image.h"
+#include "data.h"
 
 void print_chunk(Chunk *chunk) {
     printf("Length: %u\nType: %.4s", chunk->length, chunk->type);
@@ -73,13 +73,46 @@ byte *decompress_image_data(byte *data, size_t *size) {
     *size = ftell(out);
     fseek(out, 0, SEEK_SET);
 
-     byte *new_data = malloc(*size * sizeof(byte));
+    byte *new_data = malloc(*size * sizeof(byte));
 
     for (size_t i = 0; i < *size; ++i) {
         new_data[i] = (byte)fgetc(out);
     }
 
     return new_data;
+}
+
+size_t get_bpp(byte color_arg, byte bit_depth_arg) {
+    size_t bit_depth = bit_depth_arg;
+    ColorType color_type = color_arg;
+
+    size_t samples_per_pixel;
+
+    switch (color_type) {
+        case GRAYSCALE: case PALETTE:
+            samples_per_pixel = 1;
+            break;
+        case GRAYALPHA:
+            samples_per_pixel = 2;
+            break; 
+        case RGB:
+            samples_per_pixel = 3;
+            break;
+        case RGBALPHA:
+            samples_per_pixel = 4;
+            break;
+        default:
+            fprintf(stderr, "Invalid color\n");
+            return 0;
+    }
+
+    return ceil((double)samples_per_pixel * bit_depth / BITS_PER_BYTE);
+}
+
+int generate_image(RGBValue **image, size_t width, size_t height, byte *data,
+                  size_t size, ColorType color, byte bit_depth) {
+    printf("Size: %ld\n", size);
+    return 0;
 }
 
 int process_chunks(Chunk *chunks, size_t size) {
@@ -96,6 +129,14 @@ int process_chunks(Chunk *chunks, size_t size) {
     byte filter_method = (header_chunk->data + 11)[0];
     byte interlace_method = (header_chunk->data + 12)[0];
 
+    // Only specific combinations allowed (last condition applies to 2, 4 and 6
+    // (either using RGB or alpha sample))
+    if (bit_depth > 0b1000 && color_type == PALETTE || bit_depth < 0b1000 &&
+        color_type % 2 == 0 && color_type != GRAYSCALE) {
+        fprintf(stderr, "Invalid color type + bit depth combination\n");
+        return -1;
+    }
+
     if (compression_method != 0) { // Only one compression method (0) allowed
         fprintf(stderr, "Unrecognized compression code\n");
         return -1;
@@ -107,7 +148,7 @@ int process_chunks(Chunk *chunks, size_t size) {
     }
 
     if (interlace_method != 0) { // Adam7 interlacing not currently supported
-        fpritnf(stderr, "File uses interlacing method not currently supported\n");
+        fprintf(stderr, "File uses interlacing method not currently supported\n");
         return -1;
     }
 
@@ -141,15 +182,33 @@ int process_chunks(Chunk *chunks, size_t size) {
         position += chunks[i].length;
     }
 
-    //Decompressing...
+    // Decompressing...
     byte *decompressed_data = decompress_image_data(data, &data_size);
 
     printf("Size of decompressed data: %ld\n", data_size);
 
-    //Filtering...
+    // Filtering
+    // First calculating the bpp (bytes per complete pixel)...
+    size_t bpp = get_bpp(color_type, bit_depth);
 
+    // ...then defiltering the data...
+    byte *raw_data = defilter(decompressed_data, &data_size, height, bpp);
 
+    // Converting data to matrix of RGB values
+    RGBValue **image = malloc(height * sizeof(RGBValue *));
+    for (size_t i = 0; i < height; ++i) {
+        image[i] = malloc(width * sizeof(RGBValue));
+    }
+
+    generate_image(image, width, height, raw_data, data_size, color_type, bit_depth);
+
+    // Cleaning up...
+    free(raw_data);
     free(decompressed_data);
+    for (size_t i = 0; i < height; ++i) {
+        free(image[i]);
+    }
+    free(image);
 
     return 0;
 }

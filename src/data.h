@@ -1,13 +1,12 @@
 #pragma once
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <math.h>
+#include "utils.h"
 #include "kinflate/kinflate.h"
 #include "defilter.h"
-#define LEN 100
 #define ALLOC_PCK 1000
 
 #define IS_END(x) (strncmp(x, "IEND", 4) == 0)
@@ -16,7 +15,6 @@
 #define SWITCH_INT_ENDIANS(x) ((x << 24) | (x << 8 & 255 << 16) | (x >> 8 & 255 << 8) | (x >> 24))
 #define BITS_PER_BYTE 8
 
-typedef unsigned char byte;
 typedef struct __attribute__((packed)){
     byte red, green, blue;
 } RGBValue;

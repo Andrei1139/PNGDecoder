@@ -1,4 +1,4 @@
-#include "image.h"
+#include "data.h"
 
 int main() {
     system("cls");
