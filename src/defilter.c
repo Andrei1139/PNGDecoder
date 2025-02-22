@@ -60,6 +60,13 @@ static int deapply_paeth(byte *new_line, byte *old_line, byte *prev_line, size_t
     return 0;
 }
 
+int copy(byte *new_line, byte *old_line, size_t length) {
+    for (size_t i = 0; i < length; ++i) {
+        new_line[i] = old_line[i];
+    }
+    return 0;
+}
+
 static int defilter_line(byte *new_line, byte *old_line, size_t length, size_t bpp) {
     byte *prev_line = old_line - length;
     
@@ -68,7 +75,7 @@ static int defilter_line(byte *new_line, byte *old_line, size_t length, size_t b
 
     switch (type) {
         case NONE:
-            return 0;
+            return copy(new_line, old_line, length);
         case SUB:
             return deapply_sub(new_line, old_line, length, bpp);
         case UP:

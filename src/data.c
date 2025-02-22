@@ -109,12 +109,6 @@ size_t get_bpp(byte color_arg, byte bit_depth_arg) {
     return ceil((double)samples_per_pixel * bit_depth / BITS_PER_BYTE);
 }
 
-int generate_image(RGBValue **image, size_t width, size_t height, byte *data,
-                  size_t size, ColorType color, byte bit_depth) {
-    printf("Size: %ld\n", size);
-    return 0;
-}
-
 int process_chunks(Chunk *chunks, size_t size) {
     Chunk *header_chunk = &chunks[0];
 
@@ -200,7 +194,7 @@ int process_chunks(Chunk *chunks, size_t size) {
         image[i] = malloc(width * sizeof(RGBValue));
     }
 
-    generate_image(image, width, height, raw_data, data_size, color_type, bit_depth);
+    generate_image(image, width, height, raw_data, data_size, color_type, bit_depth, pallet);
 
     // Cleaning up...
     free(raw_data);
