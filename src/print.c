@@ -33,7 +33,8 @@ void print_RGB(RGBValue **data, size_t width, size_t height, char *filename) {
 
     for (size_t i = 0; i < height; ++i) {
         for (size_t j = 0; j < width; ++j) {
-            fprintf(output, "%.2f ", get_rgb_to_greyscale(data[i][j]));
+            // fprintf(output, "%.2f ", get_rgb_to_greyscale(data[i][j]));
+            fprintf(output, "[%d %d %d] ", data[i][j].red, data[i][j].green, data[i][j].blue);
         }
         fprintf(output, "\n");
     }

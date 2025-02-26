@@ -4,7 +4,7 @@ static byte bit_index = 7;
 
 static void advance(byte **data, byte bits) {
     if (bits < 8) {
-        **data << bits;
+        **data = **data << bits;
         bit_index -= bits;
     } else {
         *data += bits / 8;
@@ -21,23 +21,23 @@ static byte get_pixel_sample(byte *data, byte bits) {
         return *data;
     }
 
-    byte mask = 1 << bits - 1; // 1 for 1 bit, 11 for 2 bits, 1111 for 4 bits
-    mask = mask << 8 - bits; // 1000 000 for 1 bit, 1100 0000 for 2 bits etc.
+    byte mask = (1 << bits) - 1; // 1 for 1 bit, 11 for 2 bits, 1111 for 4 bits
+    mask = mask << (8 - bits); // 1000 000 for 1 bit, 1100 0000 for 2 bits etc.
 
     byte sample = *data & mask;
-    sample = sample >> 8 - bits;
+    sample = sample >> (8 - bits);
 
     return sample;
 }
 
 static void get_grayscale_rgb(RGBValue *value, byte **data, byte bit_depth, int has_alpha) {
-    byte sample = get_pixel_sample(*data, bit_depth);
+    unsigned short sample = get_pixel_sample(*data, bit_depth);
     advance(data, bit_depth);
     if (has_alpha) { // Alpha ignored, but taken into consideration when modifying data
         advance(data, bit_depth);
     }
 
-    byte max_sample = 1 << bit_depth - 1; // Max value for the sample
+    byte max_sample = (1 << bit_depth) - 1; // Max value for the sample
 
     byte individual_value = sample * 255 / max_sample; // Value for each color
 
@@ -79,10 +79,8 @@ size_t size, ColorType color, byte bit_depth, Chunk *pallet) {
         return -1;
     }
 
-    if (color != RGB && color != PALETTE) {
-        fprintf(stderr, "Only simple RGB and palette coloring allowed\n");
-        return -1;
-    }
+    printf("Color type: %d\n", color);
+    printf("Bit depth: %d\n", bit_depth);
 
     for (size_t row = 0; row < height; ++row) {
         for (size_t column = 0; column < width; ++column) {
@@ -105,7 +103,6 @@ size_t size, ColorType color, byte bit_depth, Chunk *pallet) {
             }
         }
     }
-
     print_RGB(image, width, height, "output.txt");
 
     return 0;
